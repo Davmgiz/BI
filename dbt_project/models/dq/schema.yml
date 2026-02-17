@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: dq_status_snapshots
+    description: "Online DQ snapshots per dbt run"
+    columns:
+      - name: check_ts
+        tests: [not_null, unique]
+      - name: overall_pass
+        tests: [not_null]
+      - name: events_last_10m
+        tests: [not_null]
+
+  - name: dq_daily
+    description: "Daily DQ metrics for last 30 days"
+    columns:
+      - name: dt
+        tests: [not_null, unique]
+      - name: rows_total
+        tests: [not_null]
+      - name: day_pass
+        tests: [not_null]

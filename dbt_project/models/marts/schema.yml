@@ -1,0 +1,43 @@
+version: 2
+
+models:
+  - name: mart_daily_metrics
+    description: "Daily KPI metrics for dashboard"
+    columns:
+      - name: dt
+        tests: [not_null, unique]
+      - name: dau
+        tests:
+          - not_null
+      - name: sessions
+        tests:
+          - not_null
+      - name: orders
+        tests:
+          - not_null
+      - name: revenue
+        tests:
+          - not_null
+      - name: conversion_rate
+        tests:
+          - not_null
+
+  - name: mart_funnel_daily
+    description: "Daily funnel metrics (unique users per step)"
+    columns:
+      - name: dt
+        tests: [not_null, unique]
+      - name: users_view
+        tests: [not_null]
+      - name: users_click
+        tests: [not_null]
+      - name: users_cart
+        tests: [not_null]
+      - name: users_purchase
+        tests: [not_null]
+      - name: view_to_click
+        tests: [not_null]
+      - name: click_to_cart
+        tests: [not_null]
+      - name: cart_to_purchase
+        tests: [not_null]

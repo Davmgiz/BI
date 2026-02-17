@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   postgres:
     image: postgres:16
@@ -30,5 +28,87 @@ services:
       INTERVAL_SEC: ${INTERVAL_SEC}
       DIRTY_RATE: ${DIRTY_RATE}
 
+  dbt:
+    build: ./dbt_project
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+  # --- Redash stack ---
+  redash_postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: redash
+      POSTGRES_USER: redash
+      POSTGRES_PASSWORD: redash
+    volumes:
+      - redash_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U redash -d redash"]
+      interval: 5s
+      retries: 20
+
+  redash_redis:
+    image: redis:7
+
+  # Init (first run): creates Redash schema/tables
+  redash_init:
+    image: redash/redash:25.8.0
+    depends_on:
+      redash_postgres:
+        condition: service_healthy
+      redash_redis:
+        condition: service_started
+    environment:
+      REDASH_DATABASE_URL: postgres://redash:redash@redash_postgres:5432/redash
+      REDASH_REDIS_URL: redis://redash_redis:6379/0
+      REDASH_SECRET_KEY: ${REDASH_SECRET_KEY}
+      REDASH_COOKIE_SECRET: ${REDASH_COOKIE_SECRET}
+    command: create_db
+    restart: "no"
+
+  redash_server:
+    image: redash/redash:25.8.0
+    depends_on:
+      redash_init:
+        condition: service_completed_successfully
+    environment:
+      REDASH_DATABASE_URL: postgres://redash:redash@redash_postgres:5432/redash
+      REDASH_REDIS_URL: redis://redash_redis:6379/0
+      REDASH_SECRET_KEY: ${REDASH_SECRET_KEY}
+      REDASH_COOKIE_SECRET: ${REDASH_COOKIE_SECRET}
+    ports:
+      - "5050:5000"
+    command: server
+
+  redash_worker:
+    image: redash/redash:25.8.0
+    depends_on:
+      redash_init:
+        condition: service_completed_successfully
+    environment:
+      REDASH_DATABASE_URL: postgres://redash:redash@redash_postgres:5432/redash
+      REDASH_REDIS_URL: redis://redash_redis:6379/0
+      REDASH_SECRET_KEY: ${REDASH_SECRET_KEY}
+      REDASH_COOKIE_SECRET: ${REDASH_COOKIE_SECRET}
+    command: worker
+
+  redash_scheduler:
+    image: redash/redash:25.8.0
+    depends_on:
+      redash_init:
+        condition: service_completed_successfully
+    environment:
+      REDASH_DATABASE_URL: postgres://redash:redash@redash_postgres:5432/redash
+      REDASH_REDIS_URL: redis://redash_redis:6379/0
+      REDASH_SECRET_KEY: ${REDASH_SECRET_KEY}
+      REDASH_COOKIE_SECRET: ${REDASH_COOKIE_SECRET}
+    command: scheduler
+
 volumes:
   pgdata:
+  redash_pgdata:

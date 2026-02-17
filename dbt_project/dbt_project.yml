@@ -1,0 +1,16 @@
+name: "bi_project"
+version: "1.0"
+config-version: 2
+
+profile: "bi_project"
+
+model-paths: ["models"]
+
+models:
+  bi_project:
+    staging:
+      +schema: stg
+      +materialized: view
+    marts:
+      +schema: mart
+      +materialized: table

@@ -1,0 +1,56 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: events
+        columns:
+          - name: event_time
+            tests:
+              - not_null:
+                  config:
+                    store_failures: true
+
+          - name: user_id
+            tests:
+              - not_null:
+                  config:
+                    store_failures: true
+
+          - name: event_name
+            tests:
+              - not_null
+              - accepted_values:
+                  arguments:
+                    values: ['view','click','add_to_cart','purchase','signup']
+                  config:
+                    store_failures: true
+
+models:
+  - name: stg_events
+    columns:
+      - name: event_time
+        tests:
+          - not_null
+
+      - name: user_id
+        tests:
+          - not_null
+
+      - name: event_name
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['view','click','add_to_cart','purchase','signup']
+
+      - name: event_date
+        tests:
+          - not_null
+
+      - name: platform
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['web','ios','android','unknown']
